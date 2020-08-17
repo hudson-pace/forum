@@ -1,0 +1,30 @@
+<div class="page-wrapper">
+  <nav>
+    <div class="home">
+      <a  class="home-button" routerLink = "/" 
+      [class.active] = "this.router.url === '/'">Hudsonotron</a>
+    </div>
+
+    <div class="account-settings">
+      <div class="account-dropdown-wrapper">
+        <div *ngIf="user" class="dropdown-container">
+          <a [class.active] = "this.router.url === '/users/' + user.username">{{ user.username }}</a>
+          <div class="dropdown-content">
+            <div><a [routerLink]="['/users', user.username]">View Profile</a></div>
+            <div><a routerLink="/dashboard">Account Settings</a></div>
+            <div><a *ngIf="user" (click)="logout()">Logout</a></div>
+          </div>
+        </div>
+      </div>
+      
+      
+      <a *ngIf="!user" (click)="toggleLogin()">Log In</a>
+      <a *ngIf="!user" (click)="toggleRegister()">Sign Up</a>
+    </div>
+  </nav>
+  <router-outlet></router-outlet>
+</div>
+<div class="page-content" [class.dimmed] = "this.isPageDimmed" (click)="clickOutside()"></div>
+
+<app-login *ngIf='isLoginActive'></app-login>
+<app-register *ngIf='isRegisterActive'></app-register>
