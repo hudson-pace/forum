@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
+const config = require('config');
 const User = require('../user.model');
 const Post = require('../post.model');
 const Comment = require('../comment.model');
-const config = require('../config');
 
 const connectionOptions = {
   useCreateIndex: true,
@@ -10,7 +10,7 @@ const connectionOptions = {
   useUnifiedTopology: true,
   useFindAndModify: false,
 };
-mongoose.connect(config.url, connectionOptions);
+mongoose.connect(config.dbUri, connectionOptions);
 mongoose.Promise = global.Promise;
 
 function isValidId(id) {

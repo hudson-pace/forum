@@ -1,7 +1,7 @@
 /* used by the users controller to restrict access to a route based on specified roles. */
 
 const jwt = require('express-jwt');
-const { secret } = require('../config');
+const config = require('config');
 const db = require('../helpers/db');
 const userService = require('../user.service');
 
@@ -14,7 +14,7 @@ function authorize(roles = []) {
   }
 
   return [
-    jwt({ secret, algorithms: ['HS256'] }),
+    jwt({ secret: config.secret, algorithms: ['HS256'] }),
 
     async (req, res, next) => {
       if (req.user) {

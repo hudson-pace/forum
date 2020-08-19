@@ -2,13 +2,11 @@ const express = require('express');
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
-const path = require('path');
+const config = require('config');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const errorHandler = require('./middleware/error-handler');
-const { secret } = require('./config');
-const config = require('./config');
 const usersController = require('./user.controller');
 const postsController = require('./post.controller');
 
@@ -40,3 +38,5 @@ if (config.environment === 'production') {
     console.log('listening to https on port 3001...');
   });
 }
+
+module.exports = app;
