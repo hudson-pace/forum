@@ -206,4 +206,5 @@ module.exports = {
   upvoteComment,
   undoCommentUpvote,
   getCommentsByPost,
+  getPostDetails,
 };

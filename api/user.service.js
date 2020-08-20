@@ -1,31 +1,26 @@
 /* core authentication logic. generates jwt and refresh tokens, fetches user data */
 
-const crypto = require('crypto');
-const config = require('./config');
-const db = require('./helpers/db');
-const { User } = require('./helpers/db');
+const User = require('./user.model');
+const Post = require('./post.model');
 const Role = require('./helpers/role');
+const { getPostDetails } = require('./post.service');
 
-function basicDetails(user) {
+function getAllowedUpdateParams(params) {
   return {
-    id: user.id,
-    username: user.username,
-    role: user.role,
-    description: user.description,
+    description: params.description,
   };
 }
+
 async function register(userParams) {
-  const user = new User();
-  user.username = userParams.username;
-  user.role = Role.User;
+  const user = new User({ username: userParams.username, role: Role.User });
   await user.save();
 
   return user;
 }
 
-async function deleteUser(id) {
+async function deleteUser(user) {
   let success = false;
-  const result = await db.User.deleteOne({ _id: id });
+  const result = await User.deleteOne({ _id: user.id });
   if (result.deletedCount > 0) {
     success = true;
   }
@@ -36,73 +31,46 @@ async function deleteUser(id) {
   };
 }
 
-async function revokeToken({ token, ipAddress }) {
-  const refreshToken = await getRefreshToken(token);
-
-  refreshToken.revoked = Date.now();
-  refreshToken.revokedByIp = ipAddress;
-  await refreshToken.save();
+async function getAllUsers() {
+  const users = await User.find();
+  return users;
 }
 
-async function getAll() {
-  const users = await db.User.find();
-  return users.map((x) => basicDetails(x));
-}
-
-async function getById(id) {
-  const user = await getUser(id);
-  return basicDetails(user);
-}
-
-async function getRefreshTokens(userId) {
-  const refreshTokens = await db.RefreshToken.find({ user: userId });
-  return refreshTokens;
-}
-
-// helper functions
-
-async function getUser(id) {
-  if (!db.isValidId(id)) {
-    throw 'User not found';
-  }
-  const user = await db.User.findById(id);
+async function getUserFromName(username) {
+  const user = await User.findOne({ username });
   if (!user) {
-    throw 'User not found';
+    const err = new Error();
+    err.name = 'NotFoundError';
+    err.message = 'User not found';
+    throw err;
   }
   return user;
 }
 
-async function getUserByName(name) {
-  const user = await db.User.findOne({ username: name });
-  if (!user) {
-    throw 'User not found';
-  }
+async function updateUser(user, updateParams) {
+  const allowedParams = getAllowedUpdateParams(updateParams);
+  Object.assign(user, allowedParams);
+  await user.save();
   return user;
 }
 
-async function updateUser(userId, username, updateParams) {
-  const user = await getUserByName(username);
-  if (user.id === userId) {
-    if (updateParams.password) {
-      // updateParams.passwordHash = bcrypt.hashSync(updateParams.password, 10);
-    }
-    await User.updateOne({ _id: userId }, updateParams);
-    return { success: true };
+async function getPostsFromUser(username, reqUser) {
+  const user = await User.findOne({ username });
+  if (!user) {
+    const err = new Error();
+    err.name = 'NotFoundError';
+    err.message = 'User not found.';
+    throw err;
   }
-  return { message: 'Unauthorized' };
-}
-
-function randomTokenString() {
-  return crypto.randomBytes(40).toString('hex');
+  const posts = await Post.find({ author: user.id });
+  return posts.map((x) => getPostDetails(x, reqUser));
 }
 
 module.exports = {
   register,
   deleteUser,
-  revokeToken,
-  getAll,
-  getById,
-  getRefreshTokens,
-  getUserByName,
+  getAllUsers,
+  getUserFromName,
   updateUser,
+  getPostsFromUser,
 };
