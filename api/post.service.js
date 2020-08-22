@@ -57,14 +57,14 @@ async function getAllPosts(user, params) {
 }
 
 async function getPostById(user, postId) {
-  const post = await Post.findOne({ _id: postId }).populate('author');
+  const post = await Post.findOne({ postId }).populate('author');
   if (!post) {
     const err = new Error();
     err.name = 'NotFoundError';
     err.message = 'Post not found.';
     throw err;
   }
-  const comments = await Comment.find({ post: postId }).sort({ datePosted: -1 }).populate('author');
+  const comments = await Comment.find({ post: post.id }).sort({ datePosted: -1 }).populate('author');
   const postDetails = getPostDetails(post, user);
   postDetails.comments = comments.map((comment) => getCommentDetails(comment, user));
   return postDetails;

@@ -2,16 +2,11 @@ const express = require('express');
 const Joi = require('@hapi/joi');
 const url = require('url');
 const authorize = require('./middleware/authorize');
+const tryToAuthenticate = require('./middleware/try-to-authenticate');
 const validateRequest = require('./middleware/validate-request');
 const postService = require('./post.service');
 
 function getAllPosts(req, res, next) {
-  const queryObject = url.parse(req.url, true).query;
-  postService.getAllPosts(undefined, queryObject)
-    .then((posts) => res.status(200).json(posts))
-    .catch(next);
-}
-function getAllPostsWithUser(req, res, next) {
   const queryObject = url.parse(req.url, true).query;
   postService.getAllPosts(req.user, queryObject)
     .then((posts) => res.status(200).json(posts))
@@ -19,22 +14,12 @@ function getAllPostsWithUser(req, res, next) {
 }
 
 function getPostById(req, res, next) {
-  postService.getPostById(undefined, req.params.id)
-    .then((post) => res.status(200).json(post))
-    .catch(next);
-}
-function getPostByIdWithUser(req, res, next) {
   postService.getPostById(req.user, req.params.id)
     .then((post) => res.status(200).json(post))
     .catch(next);
 }
 
 function getCommentsByPost(req, res, next) {
-  postService.getCommentsByPost(undefined, req.params.id)
-    .then((comments) => res.status(200).json(comments))
-    .catch(next);
-}
-function getCommentsByPostWithUser(req, res, next) {
   postService.getCommentsByPost(req.user, req.params.id)
     .then((comments) => res.status(200).json(comments))
     .catch(next);
@@ -95,12 +80,9 @@ function undoCommentUpvote(req, res, next) {
 
 const router = express.Router();
 
-router.get('/', getAllPosts);
-router.get('/with-user', authorize(), getAllPostsWithUser);
-router.get('/post/:id', getPostById);
-router.get('/post/:id/with-user', authorize(), getPostByIdWithUser);
-router.get('/post/:id/comments', getCommentsByPost);
-router.get('/post/:id/comments/with-user', authorize(), getCommentsByPostWithUser);
+router.get('/', tryToAuthenticate(), getAllPosts);
+router.get('/post/:id', tryToAuthenticate(), getPostById);
+router.get('/post/:id/comments', tryToAuthenticate(), getCommentsByPost);
 
 router.post('/', authorize(), createPostSchema, createPost);
 router.post('/post/:id', authorize(), createCommentSchema, createComment);

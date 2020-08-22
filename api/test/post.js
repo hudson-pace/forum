@@ -74,7 +74,7 @@ describe('Posts', () => {
             done();
           });
       });
-      it('It should not include user-specific information in response.', (done) => {
+      it('It should not include user-specific information in response if user is not authenticated.', (done) => {
         chai.request(server)
           .get('/posts')
           .end((err, res) => {
@@ -82,68 +82,10 @@ describe('Posts', () => {
             done();
           });
       });
-    });
-  });
-
-  describe('get /posts/with-user', () => {
-    const accessToken = jwt.sign({ username: 'test' }, config.secret, { expiresIn: '15m' });
-    it('It should not allow unauthenticated users.', (done) => {
-      chai.request(server)
-        .get('/posts/with-user')
-        .end((err, res) => {
-          res.should.have.status(401);
-          done();
-        });
-    });
-    it('It should return an array of posts.', (done) => {
-      chai.request(server)
-        .get('/posts/with-user')
-        .set('Authorization', `Bearer ${accessToken}`)
-        .end((err, res) => {
-          res.body.should.be.a('array');
-          done();
-        });
-    });
-    describe('When no posts exist:', () => {
-      it('It should return an array of length 0.', (done) => {
+      it('It should include user-specific information in response if user is authenticated.', (done) => {
+        const accessToken = jwt.sign({ username: 'test' }, config.secret, { expiresIn: '15m' });
         chai.request(server)
-          .get('/posts/with-user')
-          .set('Authorization', `Bearer ${accessToken}`)
-          .end((err, res) => {
-            res.body.length.should.be.eql(0);
-            done();
-          });
-      });
-    });
-    describe('When some posts exist:', () => {
-      before((done) => {
-        const posts = [
-          { text: 'testText1', author: mongoose.Types.ObjectId() },
-          { text: 'testText2', author: mongoose.Types.ObjectId() },
-          { text: 'testText3', author: mongoose.Types.ObjectId() },
-        ];
-        Post.insertMany(posts, (err, posts) => {
-          done();
-        });
-      });
-      after((done) => {
-        Post.deleteMany({ }, (err) => {
-          done();
-        });
-      });
-
-      it('It should return all posts.', (done) => {
-        chai.request(server)
-          .get('/posts/with-user')
-          .set('Authorization', `Bearer ${accessToken}`)
-          .end((err, res) => {
-            res.body.length.should.be.eql(3);
-            done();
-          });
-      });
-      it('It should include user-specific information in response.', (done) => {
-        chai.request(server)
-          .get('/posts/with-user')
+          .get('/posts')
           .set('Authorization', `Bearer ${accessToken}`)
           .end((err, res) => {
             res.body[0].should.have.property('hasBeenUpvoted');
@@ -158,7 +100,7 @@ describe('Posts', () => {
     before((done) => {
       const post = new Post({ text: 'testText', author: mongoose.Types.ObjectId() });
       post.save((err, post) => {
-        postId = post.id;
+        postId = post.postId;
         done();
       });
     });
@@ -182,11 +124,11 @@ describe('Posts', () => {
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.a('object');
-          res.body.should.have.property('id').eql(postId);
+          res.body.should.have.property('postId').eql(postId);
           done();
         });
     });
-    it('It should not include user-specific information.', (done) => {
+    it('It should not include user-specific information if user is not authenticated.', (done) => {
       chai.request(server)
         .get(`/posts/post/${postId}`)
         .end((err, res) => {
@@ -194,54 +136,10 @@ describe('Posts', () => {
           done();
         });
     });
-  });
-
-  describe('get /posts/post/:id/with-user', () => {
-    const accessToken = jwt.sign({ username: 'test' }, config.secret, { expiresIn: '15m' });
-    let postId;
-    before((done) => {
-      const post = new Post({ text: 'testText', author: mongoose.Types.ObjectId() });
-      post.save((err, post) => {
-        postId = post.id;
-        done();
-      });
-    });
-    after((done) => {
-      Post.deleteMany({ }, (err) => {
-        done();
-      });
-    });
-    it('It should not allow unauthenticated users.', (done) => {
+    it('It should include user-specific information if user is authenticated.', (done) => {
+      const accessToken = jwt.sign({ username: 'test' }, config.secret, { expiresIn: '15m' });
       chai.request(server)
-        .get(`/posts/post/${postId}/with-user`)
-        .end((err, res) => {
-          res.should.have.status(401);
-          done();
-        });
-    });
-    it('It should return 404 if there is no post with the given id.', (done) => {
-      chai.request(server)
-        .get(`/posts/post/${mongoose.Types.ObjectId()}/with-user`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .end((err, res) => {
-          res.should.have.status(404);
-          done();
-        });
-    });
-    it('It should return the post with the given id.', (done) => {
-      chai.request(server)
-        .get(`/posts/post/${postId}/with-user`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .end((err, res) => {
-          res.should.have.status(200);
-          res.body.should.be.a('object');
-          res.body.should.have.property('id').eql(postId);
-          done();
-        });
-    });
-    it('It should include user-specific information.', (done) => {
-      chai.request(server)
-        .get(`/posts/post/${postId}/with-user`)
+        .get(`/posts/post/${postId}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .end((err, res) => {
           res.body.should.have.property('hasBeenUpvoted');
@@ -251,6 +149,7 @@ describe('Posts', () => {
   });
 
   describe('get /posts/post/:id/comments', () => {
+    const accessToken = jwt.sign({ username: 'test' }, config.secret, { expiresIn: '15m' });
     let postId;
     before((done) => {
       const post = new Post({ text: 'testText', author: mongoose.Types.ObjectId() });
@@ -314,7 +213,7 @@ describe('Posts', () => {
             done();
           });
       });
-      it('It should not include user-specific information in response.', (done) => {
+      it('It should not include user-specific information in response when user is not authenticated.', (done) => {
         chai.request(server)
           .get(`/posts/post/${postId}/comments`)
           .end((err, res) => {
@@ -322,89 +221,9 @@ describe('Posts', () => {
             done();
           });
       });
-    });
-  });
-
-  describe('get /posts/post/:id/comments/with-user', () => {
-    const accessToken = jwt.sign({ username: 'test' }, config.secret, { expiresIn: '15m' });
-    let postId;
-    before((done) => {
-      const post = new Post({ text: 'testText', author: mongoose.Types.ObjectId() });
-      post.save((err, post) => {
-        postId = post.id;
-        done();
-      });
-    });
-    after((done) => {
-      Post.deleteMany({ }, (err) => {
-        done();
-      });
-    });
-
-    it('It should not allow unauthenticated users.', (done) => {
-      chai.request(server)
-        .get(`/posts/post/${postId}/comments/with-user`)
-        .end((err, res) => {
-          res.should.have.status(401);
-          done();
-        });
-    });
-
-    it('It should return an array of comments.', (done) => {
-      chai.request(server)
-        .get(`/posts/post/${postId}/comments/with-user`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .end((err, res) => {
-          res.should.have.status(200);
-          res.body.should.be.a('array');
-          done();
-        });
-    });
-    describe('When no comments exist:', () => {
-      it('It should return an array of length 0.', (done) => {
+      it('It should include user-specific information in response when user is authenticated.', (done) => {
         chai.request(server)
-          .get(`/posts/post/${postId}/comments/with-user`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .end((err, res) => {
-            res.body.length.should.be.eql(0);
-            done();
-          });
-      });
-    });
-    describe('When some comments exist:', () => {
-      before((done) => {
-        const comments = [
-          // These should be returned:
-          { text: 'testText', author: mongoose.Types.ObjectId(), parent: mongoose.Types.ObjectId(), post: postId },
-          { text: 'testText', author: mongoose.Types.ObjectId(), parent: mongoose.Types.ObjectId(), post: postId },
-          { text: 'testText', author: mongoose.Types.ObjectId(), parent: mongoose.Types.ObjectId(), post: postId },
-
-          // These should not be:
-          { text: 'testText', author: mongoose.Types.ObjectId(), parent: mongoose.Types.ObjectId(), post: mongoose.Types.ObjectId() },
-          { text: 'testText', author: mongoose.Types.ObjectId(), parent: mongoose.Types.ObjectId(), post: mongoose.Types.ObjectId() },
-        ];
-        Comment.insertMany(comments, (err, comments) => {
-          done();
-        });
-      });
-      after((done) => {
-        Comment.deleteMany({ }, (err) => {
-          done();
-        });
-      });
-
-      it('It should return all comments whose "post" field matches the given id.', (done) => {
-        chai.request(server)
-          .get(`/posts/post/${postId}/comments/with-user`)
-          .set('Authorization', `Bearer ${accessToken}`)
-          .end((err, res) => {
-            res.body.length.should.be.eql(3);
-            done();
-          });
-      });
-      it('It should include user-specific information in response.', (done) => {
-        chai.request(server)
-          .get(`/posts/post/${postId}/comments/with-user`)
+          .get(`/posts/post/${postId}/comments`)
           .set('Authorization', `Bearer ${accessToken}`)
           .end((err, res) => {
             res.body[0].should.have.property('hasBeenUpvoted');

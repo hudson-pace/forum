@@ -227,6 +227,7 @@ describe('Users', () => {
 
   describe('get /users/user/:username/posts', () => {
     const username = 'test';
+    const accessToken = jwt.sign({ username }, config.secret, { expiresIn: '15m' });
     beforeEach((done) => {
       const user = new User({ username, role: Role.User });
       user.save((err, user) => {
@@ -270,7 +271,7 @@ describe('Users', () => {
         });
     });
 
-    it('It should not include information regarding the requesting user.', (done) => {
+    it('It should not include information regarding the requesting user if user is not authenticated.', (done) => {
       chai.request(server)
         .get(`/users/user/${username}/posts`)
         .end((err, res) => {
@@ -278,69 +279,10 @@ describe('Users', () => {
           done();
         });
     });
-  });
 
-  describe('get /users/user/:username/posts/with-user', () => {
-    const username = 'test';
-    const accessToken = jwt.sign({ username }, config.secret, { expiresIn: '15m' });
-    beforeEach((done) => {
-      const user = new User({ username, role: Role.User });
-      user.save((err, user) => {
-        const posts = [
-          { author: user.id, text: 'testText1' },
-          { author: user.id, text: 'testText2' },
-          { author: user.id, text: 'testText3' },
-          { author: mongoose.Types.ObjectId(), text: 'testText4' },
-        ];
-        Post.insertMany(posts, (err, posts) => {
-          done();
-        });
-      });
-    });
-
-    it('It should not allow unauthenticated users.', (done) => {
+    it('It should include information regarding the requesting user if user is authenticated.', (done) => {
       chai.request(server)
-        .get(`/users/user/${username}/posts/with-user`)
-        .end((err, res) => {
-          res.should.have.status(401);
-          done();
-        });
-    });
-
-    it('It should return 404 if the specified user does not exist.', (done) => {
-      chai.request(server)
-        .get(`/users/user/${mongoose.Types.ObjectId()}/posts/with-user`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .end((err, res) => {
-          res.should.have.status(404);
-          done();
-        });
-    });
-
-    it('It should return a list of posts.', (done) => {
-      chai.request(server)
-        .get(`/users/user/${username}/posts/with-user`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .end((err, res) => {
-          res.should.have.status(200);
-          res.body.should.be.a('array');
-          done();
-        });
-    });
-
-    it('It should return all posts whose author is the specified user.', (done) => {
-      chai.request(server)
-        .get(`/users/user/${username}/posts/with-user`)
-        .set('Authorization', `Bearer ${accessToken}`)
-        .end((err, res) => {
-          res.body.length.should.be.eql(3);
-          done();
-        });
-    });
-
-    it('It should include information regarding the requesting user.', (done) => {
-      chai.request(server)
-        .get(`/users/user/${username}/posts/with-user`)
+        .get(`/users/user/${username}/posts`)
         .set('Authorization', `Bearer ${accessToken}`)
         .end((err, res) => {
           res.body[0].should.have.property('hasBeenUpvoted');

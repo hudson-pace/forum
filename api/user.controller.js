@@ -2,6 +2,7 @@ const express = require('express');
 const authorize = require('./middleware/authorize.js');
 const Role = require('./helpers/role.js');
 const userService = require('./user.service');
+const tryToAuthenticate = require('./middleware/try-to-authenticate.js');
 
 const router = express.Router();
 
@@ -41,12 +42,6 @@ function getUserFromName(req, res, next) {
 }
 
 function getPostsFromUser(req, res, next) {
-  userService.getPostsFromUser(req.params.username, undefined)
-    .then((posts) => res.status(200).json(posts))
-    .catch(next);
-}
-
-function getPostsFromUserWithUser(req, res, next) {
   userService.getPostsFromUser(req.params.username, req.user)
     .then((posts) => res.status(200).json(posts))
     .catch(next);
@@ -77,8 +72,7 @@ function deleteUserFromName(req, res, next) {
 router.get('/', authorize(Role.Admin), getAllUsers);
 router.get('/user', authorize(), getUserFromToken);
 router.get('/user/:username', getUserFromName);
-router.get('/user/:username/posts', getPostsFromUser);
-router.get('/user/:username/posts/with-user', authorize(), getPostsFromUserWithUser);
+router.get('/user/:username/posts', tryToAuthenticate(), getPostsFromUser);
 
 router.put('/user', authorize(), updateUser);
 
