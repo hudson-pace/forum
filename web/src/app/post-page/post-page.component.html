@@ -12,7 +12,7 @@
       </form>
       <div class="comments">
           <app-comment *ngFor="let comment of sortedComments" [comment]="comment"
-          [postId]="post._id"></app-comment>
+          [postId]="post.id"></app-comment>
       </div>
   </div>
 </div>

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Post } from '../models/post';
 import { ForumService } from '../services/forum.service';
+import { AuthenticationService } from '../services/authentication.service';
 
 @Component({
   selector: 'app-forum',
@@ -10,7 +11,8 @@ import { ForumService } from '../services/forum.service';
 export class ForumComponent implements OnInit {
   posts: Post[];
   constructor(
-    private forumService: ForumService
+    private authenticationService: AuthenticationService,
+    private forumService: ForumService,
   ) { }
 
   ngOnInit(): void {

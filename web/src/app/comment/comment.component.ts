@@ -2,6 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { faThumbsUp, faCommentAlt, faMinusCircle, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 
 import { ForumService } from '../services/forum.service';
+import { Comment } from '../models/comment';
 
 
 @Component({
@@ -14,7 +15,7 @@ export class CommentComponent implements OnInit {
   faCommentAlt = faCommentAlt;
   faMinusCircle = faMinusCircle;
   faPlusCircle = faPlusCircle;
-  @Input() comment;
+  @Input() comment: Comment;
   @Input() children: Comment[];
   @Input() postId;
   isCollapsed: boolean = false;
@@ -29,14 +30,14 @@ export class CommentComponent implements OnInit {
   }
   onClickLikeButton(): void {
     if (this.comment.hasBeenUpvoted) {
-      this.forumService.undoCommentUpvote(this.comment._id).subscribe(response => console.log(response));
+      this.forumService.undoCommentUpvote(this.comment.id).subscribe(response => console.log(response));
     }
     else {
-      this.forumService.upvoteComment(this.comment._id).subscribe(response => console.log(response));
+      this.forumService.upvoteComment(this.comment.id).subscribe(response => console.log(response));
     }
   }
   replyToComment(commentText) {
-    this.forumService.createCommentReply(commentText, this.comment._id, this.postId).subscribe(response => console.log(response));
+    this.forumService.createCommentReply(commentText, this.comment.id).subscribe(response => console.log(response));
   }
   collapse() {
     this.isCollapsed = true;

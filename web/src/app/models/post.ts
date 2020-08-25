@@ -6,5 +6,8 @@ export interface Post {
     tags: string[];
     datePosted: string;
     comments: Comment[];
-    _id: string;
+    id: string;
+    postId: string;
+    hasBeenUpvoted: boolean;
+    votes: number;
 }

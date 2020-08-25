@@ -3,7 +3,7 @@ export interface Comment {
   text: string;
   datePosted: string;
   votes: number;
-  _id: string;
+  id: string;
   parent: string;
   children: Comment[];
   hasBeenUpvoted: boolean;

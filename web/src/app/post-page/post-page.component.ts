@@ -4,6 +4,7 @@ import { ForumService } from '../services/forum.service';
 import { Post } from '../models/post';
 import { Comment } from '../models/comment';
 import { FormGroup, FormControl } from '@angular/forms';
+import { AuthenticationService } from '../services/authentication.service';
 
 @Component({
   selector: 'app-post-page',
@@ -28,20 +29,20 @@ export class PostPageComponent implements OnInit {
       this.postId = params['id'];
       this.forumService.getPost(this.postId).subscribe(post => {
         this.post = post;
-        this.sortedComments = this.sortComments(post.comments, post._id);
+        this.sortedComments = this.sortComments(post.comments, post.id);
       });
     });
   }
 
   onSubmitComment(): void {
-    this.forumService.createComment(this.commentForm.value.text, this.postId).subscribe(data => {
+    this.forumService.createComment(this.commentForm.value.text, this.post.id).subscribe(data => {
       console.log(data);
     });
     this.commentForm.patchValue({ text: '' });
   }
 
   upvotePost(): void {
-    this.forumService.upvotePost(this.postId).subscribe(response => console.log(response));
+    this.forumService.upvotePost(this.post.id).subscribe(response => console.log(response));
   }
 
   sortComments(comments: Comment[], parent: string) {
@@ -53,7 +54,7 @@ export class PostPageComponent implements OnInit {
       }
     }
     for (let i = 0; i < children.length; i++) {
-      children[i].children = this.sortComments(comments, children[i]._id);
+      children[i].children = this.sortComments(comments, children[i].id);
     }
     return children;
   }
